@@ -1,0 +1,266 @@
+---
+title: "Customer Segmentation using K-means Clustering in R"
+author: "**Akash Sukhavasi**"
+date: "December 12th, 2020"
+output: html_notebook
+---
+
+Final Markdown of Project
+
+# Installing Required Packages -> "factoextra","NbClust","ggplot2","plotrix"
+```{r}
+pkgs <- c("factoextra","NbClust","ggplot2","plotrix")
+install.packages(pkgs)
+```
+
+# Reading Customer Data-set into a Variable & Displaying Customer
+```{r}
+df = read.csv("Customer Data.csv")
+df
+```
+
+# Cleaning Customer Data (Omitting Null Values)
+```{r}
+df <- na.omit(df)
+```
+
+# Displaying properties/attributes of Data
+```{r}
+names(df)
+```
+
+# Displaying First 10 Rows
+```{r}
+head(df)
+```
+
+# Structure of Data
+```{r}
+str(df)
+```
+
+# Making a Duplicate of Data & Presenting a Summary
+```{r}
+customer_data = df
+summary(customer_data)
+```
+# Standard Deviation of Age
+```{r}
+sd(customer_data$Age)
+```
+# Standard Devation of Income
+```{r}
+summary(customer_data$Annual.Income..k..)
+```
+# Standard Deviation of Spending Score
+```{r}
+sd(customer_data$Spending.Score..1.100.)
+```
+
+# Gender Comparision
+Bar Plot for Gender Comparison
+```{r}
+a=table(customer_data$Gender)
+barplot(a,main="Using BarPlot to display Gender Comparision",
+        ylab="Count",
+        xlab="Gender",
+        col=rainbow(2),
+        legend=rownames(a))
+```
+
+Pie Chart describing the percentages of Male and Female Gender
+```{r}
+pct=round(a/sum(a)*100)
+lbs=paste(c("Female","Male")," ",pct,"%",sep=" ")
+library(plotrix)
+pie3D(a,labels=lbs,
+      main="Pie Chart Depicting Ratio of Female and Male")
+```
+
+Box Plot for descriptive Analysis of Spending Score
+```{r}
+boxplot(customer_data$Spending.Score..1.100.,
+        horizontal=TRUE,
+        col="#990000",
+        main="BoxPlot for Descriptive Analysis of Spending Score")
+```
+
+# Summary Of Spending Score
+```{r}
+summary(customer_data$Spending.Score..1.100.)
+```
+
+# Visualization of Age and Gender together
+```{r}
+library(ggplot2)
+bold_axis <- element_text(face = "bold", color = "black", size = 20)
+axis_text <- element_text(face = "bold", size = 14)
+# bold axis is used for the text characteristics of headings of the graphs
+# axis_text is used for the text characteristics of labels of the graphs
+```
+
+# Histogram of Customer Age
+```{r}
+Plotage <- ggplot(customer_data,aes(x=Age))
+Plotage + geom_histogram(fill="purple", alpha = 0.7,bins=30) + theme(axis.text = axis_text) + theme(title = bold_axis) + ggtitle("Histogram of Customer Age")
+```
+
+# Visualization of customers by age and gender
+```{r}
+Plotagegender <- ggplot(customer_data, aes(x = Age))
+
+Plotagegender + geom_histogram(aes(fill = factor(Gender)),bins=30) + ggtitle("Histogram of Customers by Age (Colored by Gender)") + theme(axis.text = axis_text) + theme(title = bold_axis)
+```
+
+# K-Means Clustering
+
+K-means is a centroid-based algorithm, or a distance-based algorithm, where we calculate the distances to assign a point to a cluster. In K-Means, each cluster is associated with a centroid.
+
+There are three methods to find the optimal number of clusters :
+1.Elbow Method
+2.Silhouette Method
+3.Gap-statistic Method
+
+we need libraries like ggplot2,dplyr,cluster,factoextra for implementing k-means clustering
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(cluster)
+library(factoextra)
+```
+
+For simplicity reasons , we are renaming the attribute names to cust_id,gender,age,annual_income_000,spend_score
+```{r}
+colnames(customer_data) <- c("cust_id","gender","age","annual_income_000","spend_score")
+```
+
+# 1. Elbow Method
+In cluster analysis, the elbow method is a heuristic used in determining the number of clusters in a data set. The method consists of plotting the explained variation as a function of the number of clusters, and picking the elbow of the curve as the number of clusters to use. 
+
+Here we are performing the elbow method on spending_score and annual_income.
+```{r}
+kk <- 1:10
+wss <- c()
+for (i in kk){
+  cluster_temp <- kmeans(customer_data[,c(4,5)], centers = i, nstart = 25)
+  wss <- c(wss, cluster_temp$tot.withinss)
+}
+plot(wss, type = "b")
+```
+
+# 2. Average Silhouette Method
+```{r}
+fviz_nbclust(customer_data[,c(4,5)], kmeans, method = "silhouette", k.max = 10) + theme_minimal() + ggtitle("The Silhouette Plot")
+```
+
+# 3. Gap-Statistic Method
+```{r}
+set.seed(123)
+gap_stat <- clusGap(customer_data[,c(4,5)], FUN = kmeans, nstart = 25, K.max = 10, B = 50)
+fviz_gap_stat(gap_stat) + theme_minimal() + ggtitle("Gap Statistic Method")
+```
+
+# Gap - Statistic Method Explanation
+```{r}
+set.seed(123)
+gap_stat <- clusGap(customer_data[,c(4,5)], FUN = kmeans, nstart = 25, K.max = 10, B = 50)
+print(gap_stat, method = "firstmax")
+```
+
+From the above methods the optimal number of clustering can be done with either k=5 or k=6
+# K = 5
+Clustering According to Spending Score and Annual Income:
+considering the number of optimal number of clusters = 5
+
+```{r}
+set.seed(10)
+cluster_5 <- kmeans(customer_data[,c(4,5)], centers = 5, nstart = 25)
+cluster_5
+```
+
+As we see in the Clustering Vector all the 200 points in the data-set have been classified into 5 different clusters.
+
+Now we are modifying the data-set by adding the cluster number to each corresponding point using mutate.
+```{r}
+library(dplyr)
+library(magrittr)
+customer_data <- customer_data %>% mutate(cluster5 = cluster_5$cluster)
+```
+
+Printing the data-set after adding the cluster number
+```{r}
+customer_data
+```
+
+# Printing a Scatter Plot for the above data (K = 5)
+```{r}
+library(ggplot2)
+ggplot(customer_data, aes(x = annual_income_000, y = spend_score, colour = factor(cluster5))) +
+  geom_point() +
+  scale_color_discrete(name = "Clusters") +
+  xlab("Annual income of customers (thousands)") +
+  ylab("Spending score")
+```
+The conclusions from the above graph are :
+
+cluster 1 : High Annual Income and High Spending Score
+Cluster 2 : Low Annual Income and High Spending Score
+Cluster 3 : Average Annual Income and Average Spending Score
+Cluster 4 : High Annual Income and Low spending score
+Cluster 5 : Low Annual Income and Low spending score
+
+Till now we considered only the attributes spending score and annual income
+
+# K = 6
+```{r}
+k6<-kmeans(customer_data[,3:5],6,iter.max=100,nstart=100)
+k6
+```
+
+# Plotting Customer Age with Spending Score (K = 6)
+```{r}
+ggplot(df, aes(x =Spending.Score..1.100., y =Age)) + 
+  geom_point(aes(color = as.factor(k6$cluster))) +
+  scale_color_discrete(name=" ",
+                      breaks=c("1", "2", "3", "4", "5","6"),
+                      labels=c("Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4", "Cluster 5","Cluster 6")) +
+  ggtitle("Segments of Mall Customers", subtitle = "Using K-means Clustering")
+```
+
+# Principal Component Analysis
+
+As there are three attributes for the execution: Age,Spending Score,Annual Income.
+
+We will be getting a three dimensional point (x,y,z)
+Principal component analysis is the process of flattening the data set so that we can convert the three dimensional point into a two dimensional point.
+
+We will be getting 3 rotation points PC1,PC2,PC3
+where the variation among these is in the following order : PC1>PC2>PC3
+```{r}
+pcclust=prcomp(customer_data[,3:5])
+pcclust
+```
+
+# Summary of Principal Component Analysis
+```{r}
+summary(pcclust)
+```
+
+as PC1 has the highest variation
+
+```{r}
+pcclust$rotation[,1:2]
+```
+
+
+```{r}
+kCols=function(vec){cols=rainbow (length (unique (vec)))
+return (cols[as.numeric(as.factor(vec))])}
+
+digCluster<-k6$cluster; dignm<-as.character(digCluster); # K-means clusters
+
+plot(pcclust$x[,1:2], col = kCols(digCluster),pch = 19,xlab = "K-means",ylab= "Classes")
+legend("bottomleft",unique(dignm),fill=unique(kCols(digCluster)))
+
+```
