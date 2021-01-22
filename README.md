@@ -8,6 +8,8 @@ It is very relevant for management to calculate some satisfied consumers of a pa
 
 This data-science-based machine learning project uses K-means clustering, which is the essential algorithm for clustering un-labeled anonymized datasets. The K-means algorithm identifies the K-Number of Centroids and then allocates every data point to the nearest cluster while keeping the Centroids as small as possible.
 
+[Data Set](https://github.com/AkashSukhavasi/CustomerSegmentation/blob/master/Customer%20Data.csv)
 
+[Look at our Project](https://akashsukhavasi.github.io/CustomerSegmentation/)
 
 *This Project is an Academic Requirement — Course ECS491 in Bachelors*
